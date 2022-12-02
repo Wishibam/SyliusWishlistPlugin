@@ -140,4 +140,17 @@ final class WishlistRepository extends EntityRepository implements WishlistRepos
             ->getOneOrNullResult()
             ;
     }
+
+    public function deleteWishlistsNotModifiedSince(\DateTimeInterface $period): void
+    {
+        $this
+            ->createQueryBuilder('o')
+            ->delete()
+            ->where('o.updatedAt IS NULL AND o.createdAt < :period')
+            ->orWhere('o.updatedAt < :period')
+            ->setParameter('period', $period)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 }
