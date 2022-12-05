@@ -33,11 +33,16 @@ class Wishlist implements WishlistInterface
 
     protected ?ChannelInterface $channel;
 
+    protected \DateTimeInterface $createdAt;
+
+    protected \DateTimeInterface $updatedAt;
+
     public function __construct()
     {
         $this->wishlistProducts = new ArrayCollection();
         $this->token = new WishlistToken();
         $this->id = null;
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -53,6 +58,7 @@ class Wishlist implements WishlistInterface
     public function setName(?string $name): void
     {
         $this->name = $name;
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getProducts(): Collection
@@ -124,6 +130,7 @@ class Wishlist implements WishlistInterface
         if (!$this->hasProductVariant($variant)) {
             $wishlistProduct->setWishlist($this);
             $this->wishlistProducts->add($wishlistProduct);
+            $this->updatedAt = new \DateTimeImmutable();
         }
     }
 
@@ -151,6 +158,7 @@ class Wishlist implements WishlistInterface
     {
         if ($this->hasWishlistProduct($product)) {
             $this->wishlistProducts->removeElement($product);
+            $this->updatedAt = new \DateTimeImmutable();
         }
 
         return $this;
@@ -161,6 +169,7 @@ class Wishlist implements WishlistInterface
         foreach ($this->wishlistProducts as $wishlistProduct) {
             if ($wishlistProduct->getVariant() === $variant) {
                 $this->wishlistProducts->removeElement($wishlistProduct);
+                $this->updatedAt = new \DateTimeImmutable();
             }
         }
 
@@ -170,6 +179,7 @@ class Wishlist implements WishlistInterface
     public function clear(): void
     {
         $this->wishlistProducts = new ArrayCollection();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getChannel(): ?ChannelInterface
@@ -180,5 +190,15 @@ class Wishlist implements WishlistInterface
     public function setChannel(?ChannelInterface $channel): void
     {
         $this->channel = $channel;
+    }
+
+    public function getCreatedAt(): \DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): \DateTimeInterface
+    {
+        return $this->updatedAt;
     }
 }
