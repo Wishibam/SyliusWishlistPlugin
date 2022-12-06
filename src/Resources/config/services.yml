@@ -365,9 +365,9 @@ services:
             - { name: controller.service_arguments }
 
     bitbag_sylius_wishlist_plugin.command.remove_expired_wishlists:
-        class: BitBag\SyliusWishlistPlugin\Command\RemoveExpiredWishlistsCommand
+        class: BitBag\SyliusWishlistPlugin\Command\Wishlist\RemoveExpiredWishlistsCommand
         arguments:
-            - '@bitbag_sylius_wishlist_plugin.repository.wishlist'
-            - '%bitbag_sylius_wishlist_plugin.parameters.wishlist_expiration_period%'
+            - "@bitbag_sylius_wishlist_plugin.repository.wishlist"
+            - "%bitbag_sylius_wishlist_plugin.parameters.wishlist_expiration_period%"
         tags:
             - { name: console.command }
