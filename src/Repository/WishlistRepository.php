@@ -153,4 +153,16 @@ final class WishlistRepository extends EntityRepository implements WishlistRepos
             ->getResult()
         ;
     }
+
+    public function save(WishlistInterface $wishlist): void
+    {
+        $this->getEntityManager()->persist($wishlist);
+        $this->getEntityManager()->flush();
+    }
+
+    public function delete(WishlistInterface $wishlist): void
+    {
+        $this->getEntityManager()->remove($wishlist);
+        $this->getEntityManager()->flush();
+    }
 }

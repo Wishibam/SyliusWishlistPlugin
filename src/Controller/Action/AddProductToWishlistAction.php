@@ -10,13 +10,13 @@ declare(strict_types=1);
 
 namespace BitBag\SyliusWishlistPlugin\Controller\Action;
 
+use BitBag\SyliusWishlistPlugin\Context\WishlistContextInterface;
 use BitBag\SyliusWishlistPlugin\Entity\Wishlist;
 use BitBag\SyliusWishlistPlugin\Entity\WishlistInterface;
 use BitBag\SyliusWishlistPlugin\Entity\WishlistProductInterface;
 use BitBag\SyliusWishlistPlugin\Exception\WishlistNotFoundException;
 use BitBag\SyliusWishlistPlugin\Factory\WishlistFactoryInterface;
 use BitBag\SyliusWishlistPlugin\Factory\WishlistProductFactoryInterface;
-use BitBag\SyliusWishlistPlugin\Resolver\WishlistsResolverInterface;
 use Doctrine\Persistence\ObjectManager;
 use Sylius\Component\Channel\Context\ChannelContextInterface;
 use Sylius\Component\Channel\Context\ChannelNotFoundException;
@@ -36,39 +36,18 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class AddProductToWishlistAction
 {
-    private ProductRepositoryInterface $productRepository;
-    private WishlistProductFactoryInterface $wishlistProductFactory;
-    private RequestStack $requestStack;
-    private TranslatorInterface $translator;
-    private WishlistsResolverInterface $wishlistsResolver;
-    private ObjectManager $wishlistManager;
-    private ChannelContextInterface $channelContext;
-    private WishlistFactoryInterface $wishlistFactory;
-    private Security $security;
-    private string $wishlistCookieTokenName;
-
     public function __construct(
-        ProductRepositoryInterface $productRepository,
-        WishlistProductFactoryInterface $wishlistProductFactory,
-        RequestStack $requestStack,
-        TranslatorInterface $translator,
-        WishlistsResolverInterface $wishlistsResolver,
-        ObjectManager $wishlistManager,
-        ChannelContextInterface $channelContext,
-        WishlistFactoryInterface $wishlistFactory,
-        Security $security,
-        string $wishlistCookieTokenName,
+        private ProductRepositoryInterface $productRepository,
+        private WishlistProductFactoryInterface $wishlistProductFactory,
+        private RequestStack $requestStack,
+        private TranslatorInterface $translator,
+        private WishlistContextInterface $wishlistContext,
+        private ObjectManager $wishlistManager,
+        private ChannelContextInterface $channelContext,
+        private WishlistFactoryInterface $wishlistFactory,
+        private Security $security,
+        private string $wishlistCookieTokenName,
     ) {
-        $this->productRepository = $productRepository;
-        $this->wishlistProductFactory = $wishlistProductFactory;
-        $this->requestStack = $requestStack;
-        $this->translator = $translator;
-        $this->wishlistsResolver = $wishlistsResolver;
-        $this->wishlistManager = $wishlistManager;
-        $this->channelContext = $channelContext;
-        $this->wishlistFactory = $wishlistFactory;
-        $this->security = $security;
-        $this->wishlistCookieTokenName = $wishlistCookieTokenName;
     }
 
     public function __invoke(Request $request): Response
@@ -87,12 +66,13 @@ final class AddProductToWishlistAction
             $channel = null;
         }
 
-        $wishlists = $this->wishlistsResolver->resolve();
+        $refererPathInfo = parse_url($request->headers->get('referer'))['path'];
 
-        /** @var WishlistInterface $wishlist */
-        $wishlist = array_shift($wishlists);
+        $response = new RedirectResponse($refererPathInfo);
 
-        if (null === $wishlist) {
+        $wishlist = $this->wishlistContext->getWishlist();
+
+        if (!$wishlist instanceof WishlistInterface) {
             $user = $this->security->getUser();
 
             if ($user instanceof ShopUserInterface) {
@@ -104,6 +84,10 @@ final class AddProductToWishlistAction
             }
 
             $wishlist->setName('Wishlist');
+
+            $cookie = new Cookie($this->wishlistCookieTokenName, $wishlist->getToken(), strtotime('+1 year'));
+
+            $response->headers->setCookie($cookie);
         }
 
         if (null !== $channel && $wishlist->getChannel()->getId() !== $channel->getId()) {
@@ -124,17 +108,6 @@ final class AddProductToWishlistAction
         $session = $this->requestStack->getSession();
 
         $session->getFlashBag()->add('success', $this->translator->trans('bitbag_sylius_wishlist_plugin.ui.added_wishlist_item'));
-
-        $referer = $request->headers->get('referer');
-        $refererPathInfo = Request::create($referer)->getPathInfo();
-
-        $response = new RedirectResponse($refererPathInfo);
-
-        if (!$request->cookies->has($this->wishlistCookieTokenName)) {
-            $cookie = new Cookie($this->wishlistCookieTokenName, $wishlist->getToken(), strtotime('+1 year'));
-
-            $response->headers->setCookie($cookie);
-        }
 
         return $response;
     }

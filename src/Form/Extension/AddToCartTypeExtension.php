@@ -38,12 +38,6 @@ final class AddToCartTypeExtension extends AbstractTypeExtension
                         'class' => 'bitbag-add-variant-to-wishlist ui icon labeled button',
                     ],
                 ])
-                ->add('wishlists', EntityType::class, [
-                    'class' => Wishlist::class,
-                    'choices' => $this->wishlistsResolver->resolve(),
-                    'choice_label' => 'name',
-                    'mapped' => false,
-                ])
             ;
         }
     }

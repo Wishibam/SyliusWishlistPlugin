@@ -1,0 +1,31 @@
+services:
+    bitbag_sylius_wishlist_plugin.event_subscriber.bind_user_to_anonymous_wishlist:
+        class: BitBag\SyliusWishlistPlugin\EventSubscriber\BindUserToAnonymousWishlistEventSubscriber
+        arguments:
+            - "%bitbag_sylius_wishlist_plugin.parameters.wishlist_cookie_token%"
+            - '@session'
+            - "@security.helper"
+            - '@request_stack'
+            - "@bitbag_sylius_wishlist_plugin.repository.wishlist"
+        tags:
+            - { name: kernel.event_subscriber }
+
+    bitbag_sylius_wishlist_plugin.event_subscriber.merge_wishlists:
+        class: BitBag\SyliusWishlistPlugin\EventSubscriber\MergeWishlistsEventSubscriber
+        arguments:
+            - "%bitbag_sylius_wishlist_plugin.parameters.wishlist_cookie_token%"
+            - '@session'
+            - "@security.helper"
+            - '@request_stack'
+            - "@bitbag_sylius_wishlist_plugin.repository.wishlist"
+        tags:
+            - { name: kernel.event_subscriber }
+
+    bitbag_sylius_wishlist_plugin.event_subscriber.remove_wishlist_cookie:
+        class: BitBag\SyliusWishlistPlugin\EventSubscriber\RemoveWishlistCookieEventSubscriber
+        arguments:
+            - "%bitbag_sylius_wishlist_plugin.parameters.wishlist_cookie_token%"
+            - '@session'
+            - '@request_stack'
+        tags:
+            - { name: kernel.event_subscriber }

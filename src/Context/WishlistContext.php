@@ -11,76 +11,39 @@ declare(strict_types=1);
 namespace BitBag\SyliusWishlistPlugin\Context;
 
 use BitBag\SyliusWishlistPlugin\Entity\WishlistInterface;
-use BitBag\SyliusWishlistPlugin\Factory\WishlistFactoryInterface;
 use BitBag\SyliusWishlistPlugin\Repository\WishlistRepositoryInterface;
-use Sylius\Component\Channel\Context\ChannelContextInterface;
-use Sylius\Component\Channel\Context\ChannelNotFoundException;
 use Sylius\Component\Core\Model\ShopUserInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Security\Core\Security;
 
 final class WishlistContext implements WishlistContextInterface
 {
-    private TokenStorageInterface $tokenStorage;
-
-    private WishlistRepositoryInterface $wishlistRepository;
-
-    private WishlistFactoryInterface $wishlistFactory;
-
-    private string $wishlistCookieToken;
-
-    private ChannelContextInterface $channelContext;
-
     public function __construct(
-        TokenStorageInterface $tokenStorage,
-        WishlistRepositoryInterface $wishlistRepository,
-        WishlistFactoryInterface $wishlistFactory,
-        string $wishlistCookieToken,
-        ChannelContextInterface $channelContext
+        private string $cookieWishlistTokenName,
+        private Security $security,
+        private WishlistRepositoryInterface $wishlistRepository,
+        private RequestStack $requestStack,
     ) {
-        $this->tokenStorage = $tokenStorage;
-        $this->wishlistRepository = $wishlistRepository;
-        $this->wishlistFactory = $wishlistFactory;
-        $this->wishlistCookieToken = $wishlistCookieToken;
-        $this->channelContext = $channelContext;
     }
 
-    public function getWishlist(Request $request): WishlistInterface
+    public function getWishlist(): ?WishlistInterface
     {
-        /** @var ?string $cookieWishlistToken */
-        $cookieWishlistToken = $request->cookies->get($this->wishlistCookieToken);
+        $user = $this->security->getUser();
 
-        /** @var ?TokenInterface $token */
-        $token = $this->tokenStorage->getToken();
-
-        /** @var WishlistInterface $wishlist */
-        $wishlist = $this->wishlistFactory->createNew();
-
-        $user = null !== $token ? $token->getUser() : null;
-
-        if (null === $cookieWishlistToken && null === $user) {
-            return $wishlist;
+        // if the user is connected, return its wishlist if he has one
+        if ($user instanceof ShopUserInterface) {
+            return $this->wishlistRepository->findOneByShopUser($user);
         }
 
-        if (null !== $cookieWishlistToken && !$user instanceof ShopUserInterface) {
-            return $this->wishlistRepository->findByToken($cookieWishlistToken) ?? $wishlist;
+        $cookies = $this->requestStack->getMainRequest()->cookies;
+
+        // if not, return the wishlist referenced in its cookie
+        $cookieWishlistToken = $cookies->get($this->cookieWishlistTokenName);
+
+        if (!empty($cookieWishlistToken)) {
+            return $this->wishlistRepository->findByToken($cookieWishlistToken);
         }
 
-        try {
-            $channel = $this->channelContext->getChannel();
-        } catch (ChannelNotFoundException $exception) {
-            $channel = null;
-        }
-
-        if (null !== $channel) {
-            if ($user instanceof ShopUserInterface) {
-                $wishlist = $this->wishlistRepository->findOneByShopUserAndChannel($user, $channel);
-
-                return $wishlist ?? $this->wishlistFactory->createForUserAndChannel($user, $channel);
-            }
-        }
-
-        return $wishlist;
+        return null;
     }
 }

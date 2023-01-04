@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace BitBag\SyliusWishlistPlugin\Controller\Action;
 
+use BitBag\SyliusWishlistPlugin\Context\WishlistContextInterface;
 use BitBag\SyliusWishlistPlugin\Entity\WishlistInterface;
 use BitBag\SyliusWishlistPlugin\Form\Type\WishlistCollectionType;
 use BitBag\SyliusWishlistPlugin\Processor\WishlistCommandProcessorInterface;
-use BitBag\SyliusWishlistPlugin\Resolver\WishlistsResolverInterface;
 use Sylius\Component\Order\Context\CartContextInterface;
 use Sylius\Component\Order\Context\CartNotFoundException;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -23,36 +23,19 @@ use Twig\Environment;
 
 final class ListWishlistProductsAction
 {
-    private CartContextInterface $cartContext;
-
-    private FormFactoryInterface $formFactory;
-
-    private Environment $twigEnvironment;
-
-    private WishlistCommandProcessorInterface $wishlistCommandProcessor;
-
-    private WishlistsResolverInterface $wishlistsResolver;
-
     public function __construct(
-        CartContextInterface $cartContext,
-        FormFactoryInterface $formFactory,
-        Environment $twigEnvironment,
-        WishlistCommandProcessorInterface $wishlistCommandProcessor,
-        WishlistsResolverInterface $wishlistsResolver
+        private CartContextInterface $cartContext,
+        private FormFactoryInterface $formFactory,
+        private Environment $twigEnvironment,
+        private WishlistCommandProcessorInterface $wishlistCommandProcessor,
+        private WishlistContextInterface $wishlistContext,
     ) {
-        $this->cartContext = $cartContext;
-        $this->formFactory = $formFactory;
-        $this->twigEnvironment = $twigEnvironment;
-        $this->wishlistCommandProcessor = $wishlistCommandProcessor;
-        $this->wishlistsResolver = $wishlistsResolver;
     }
 
     public function __invoke(Request $request): Response
     {
-        $wishlists = $this->wishlistsResolver->resolve();
-
         /** @var WishlistInterface $wishlist */
-        $wishlist = array_shift($wishlists);
+        $wishlist = $this->wishlistContext->getWishlist();
 
         try {
             $cart = $this->cartContext->getCart();
