@@ -16,8 +16,8 @@ final class Version20221206172354 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE bitbag_wishlist ADD created_at DATETIME DEFAULT NULL');
-        $this->addSql('ALTER TABLE bitbag_wishlist ADD updated_at DATETIME DEFAULT NULL');
+        $this->addSql('ALTER TABLE bitbag_wishlist ADD created_at DATETIME NOT NULL');
+        $this->addSql('ALTER TABLE bitbag_wishlist ADD updated_at DATETIME NOT NULL');
     }
 
     public function down(Schema $schema): void
