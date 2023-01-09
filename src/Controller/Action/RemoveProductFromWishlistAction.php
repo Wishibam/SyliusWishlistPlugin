@@ -64,7 +64,7 @@ final class RemoveProductFromWishlistAction
         }
 
         /** @var WishlistInterface $wishlist */
-        $wishlist = $this->wishlistContext->getWishlist($request);
+        $wishlist = $this->wishlistContext->getWishlist();
 
         foreach ($wishlist->getWishlistProducts() as $wishlistProduct) {
             if ($product === $wishlistProduct->getProduct()) {

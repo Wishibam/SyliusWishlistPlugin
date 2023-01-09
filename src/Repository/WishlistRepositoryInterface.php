@@ -41,4 +41,8 @@ interface WishlistRepositoryInterface extends RepositoryInterface
     public function findOneByShopUserAndName(ShopUserInterface $shopUser, string $name): ?WishlistInterface;
 
     public function deleteWishlistsNotModifiedSince(\DateTimeInterface $period): void;
+
+    public function save(WishlistInterface $wishlist): void;
+
+    public function delete(WishlistInterface $wishlist): void;
 }
