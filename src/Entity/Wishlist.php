@@ -42,6 +42,7 @@ class Wishlist implements WishlistInterface
         $this->wishlistProducts = new ArrayCollection();
         $this->token = new WishlistToken();
         $this->id = null;
+        $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
     }
 
