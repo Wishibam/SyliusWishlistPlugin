@@ -12,6 +12,7 @@ namespace BitBag\SyliusWishlistPlugin\Controller\Action;
 
 use BitBag\SyliusWishlistPlugin\Context\WishlistContextInterface;
 use BitBag\SyliusWishlistPlugin\Entity\WishlistInterface;
+use BitBag\SyliusWishlistPlugin\Exception\WishlistNotFoundException;
 use Doctrine\ORM\EntityManagerInterface;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Core\Repository\ProductRepositoryInterface;
@@ -65,6 +66,12 @@ final class RemoveProductFromWishlistAction
 
         /** @var WishlistInterface $wishlist */
         $wishlist = $this->wishlistContext->getWishlist();
+
+        if (null === $wishlist) {
+            throw new WishlistNotFoundException(
+                'Wishlist not found.'
+            );
+        }
 
         foreach ($wishlist->getWishlistProducts() as $wishlistProduct) {
             if ($product === $wishlistProduct->getProduct()) {
