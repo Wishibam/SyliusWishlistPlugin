@@ -66,6 +66,9 @@ final class AddProductToWishlistAction
             $channel = null;
         }
 
+        if (null === $request->headers->get('referer')) {
+            throw new NotFoundHttpException();
+        }
         $refererPathInfo = parse_url($request->headers->get('referer'))['path'];
 
         $response = new RedirectResponse($refererPathInfo);
