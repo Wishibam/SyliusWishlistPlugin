@@ -22,6 +22,7 @@ use Sylius\Component\Channel\Context\ChannelContextInterface;
 use Sylius\Component\Channel\Context\ChannelNotFoundException;
 use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Core\Model\ProductInterface;
+use Sylius\Component\Core\Model\ProductVariantInterface;
 use Sylius\Component\Core\Model\ShopUserInterface;
 use Sylius\Component\Core\Repository\ProductRepositoryInterface;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -69,6 +70,7 @@ final class AddProductToWishlistAction
         if (null === $request->headers->get('referer')) {
             throw new NotFoundHttpException();
         }
+
         $refererPathInfo = parse_url($request->headers->get('referer'))['path'];
 
         $response = new RedirectResponse($refererPathInfo);
@@ -102,15 +104,17 @@ final class AddProductToWishlistAction
         /** @var WishlistProductInterface $wishlistProduct */
         $wishlistProduct = $this->wishlistProductFactory->createForWishlistAndProduct($wishlist, $product);
 
-        $wishlist->addWishlistProduct($wishlistProduct);
+        if ($wishlistProduct->getVariant() instanceof ProductVariantInterface) {
+            $wishlist->addWishlistProduct($wishlistProduct);
 
-        $this->wishlistManager->persist($wishlist);
-        $this->wishlistManager->flush();
+            $this->wishlistManager->persist($wishlist);
+            $this->wishlistManager->flush();
 
-        /** @var Session $session */
-        $session = $this->requestStack->getSession();
+            /** @var Session $session */
+            $session = $this->requestStack->getSession();
 
-        $session->getFlashBag()->add('success', $this->translator->trans('bitbag_sylius_wishlist_plugin.ui.added_wishlist_item'));
+            $session->getFlashBag()->add('success', $this->translator->trans('bitbag_sylius_wishlist_plugin.ui.added_wishlist_item'));
+        }
 
         return $response;
     }
