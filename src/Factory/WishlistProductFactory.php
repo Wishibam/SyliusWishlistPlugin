@@ -10,7 +10,6 @@ declare(strict_types=1);
 
 namespace BitBag\SyliusWishlistPlugin\Factory;
 
-use App\Entity\Product\ProductVariant;
 use BitBag\SyliusWishlistPlugin\Entity\WishlistInterface;
 use BitBag\SyliusWishlistPlugin\Entity\WishlistProductInterface;
 use Sylius\Component\Core\Model\ProductInterface;
@@ -42,8 +41,14 @@ final class WishlistProductFactory implements WishlistProductFactoryInterface
 
         $wishlistProduct->setWishlist($wishlist);
         $wishlistProduct->setProduct($product);
-        /** @var ProductVariantInterface $variant */
-        $variant = $product->getVariants()->filter(fn(ProductVariant $variant) => $variant->isEnabled())->first();
+
+        /** @var false|ProductVariantInterface $variant */
+        $variant = $product->getVariants()->filter(static fn (ProductVariantInterface $variant): bool => $variant->isEnabled())->first();
+
+        if (false === $variant) {
+            return $wishlistProduct;
+        }
+
         $wishlistProduct->setVariant($variant);
 
         return $wishlistProduct;
